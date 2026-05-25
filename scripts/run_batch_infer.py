@@ -28,6 +28,13 @@ DEFAULT_MODEL_NAMES = [
     "Qwen2.5-0.5B-Instruct",
 ]
 
+# Default prompts: one Chinese, one English
+DEFAULT_PROMPTS = [
+    "山东最高的山是？",
+    "introduce yourself",
+]
+
+
 # ============================================================
 # Main
 # ============================================================
@@ -51,10 +58,13 @@ def main():
                         help="Device type (e.g. nvidia, moore)")
     parser.add_argument("--tp", type=int, default=2,
                         help="Tensor parallelism degree")
-    parser.add_argument("--batch-size", type=int, default=3,
+    parser.add_argument("--batch-size", type=int, default=1,
                         help="Batch size for inference")
-    parser.add_argument("--prompt", type=str, default="山东最高的山是？",
-                        help="Prompt text for inference")
+    parser.add_argument("--prompts", type=str, nargs="*", default=None,
+                        help="Override prompt list "
+                             "(e.g. --prompts '你好' 'introduce yourself'). "
+                             "If omitted, one Chinese + one English prompt is used by default. "
+                             "Use --prompts 'single question' for only one run.")
     parser.add_argument("--enable-paged-attn", action="store_true",
                         help="Enable paged attention")
     parser.add_argument("--script", type=str, default="examples/test_infer.py",
@@ -64,6 +74,9 @@ def main():
 
     # Build model name list
     model_names = args.models if args.models else DEFAULT_MODEL_NAMES
+
+    # Build prompt list
+    prompts = args.prompts if args.prompts is not None else DEFAULT_PROMPTS
 
     # Build full model paths from model_dir + model_name
     model_dir = args.model_dir.rstrip("/")
@@ -75,39 +88,47 @@ def main():
     print(f"  Device:          {args.device}")
     print(f"  TP:              {args.tp}")
     print(f"  Batch size:      {args.batch_size}")
-    print(f"  Prompt:          {args.prompt}")
     print(f"  Paged Attention: {args.enable_paged_attn}")
     print(f"  Script:          {args.script}")
+    print(f"  Prompts ({len(prompts)}):")
+    for i, p in enumerate(prompts, 1):
+        print(f"    [{i}] {p}")
     print(f"  Models ({len(model_paths)}):")
     for p in model_paths:
         print(f"    - {p}")
     print()
 
-    # Run inference for each model
-    total = len(model_paths)
+    # Run inference for each model × each prompt
+    total_models = len(model_paths)
+    total_prompts = len(prompts)
+    total_runs = total_models * total_prompts
+    run_idx = 0
 
-    for idx, model_path in enumerate(model_paths, 1):
+    for model_path in model_paths:
         name = os.path.basename(model_path.rstrip("/"))
-        print("=" * 60)
-        print(f"  [{idx}/{total}] Inference model: {name}")
-        print("=" * 60)
 
-        cmd = [
-            sys.executable, args.script,
-            "--device", args.device,
-            "--model", model_path,
-            "--tp", str(args.tp),
-            "--batch-size", str(args.batch_size),
-            "--prompt", args.prompt,
-        ]
+        for prompt_idx, prompt in enumerate(prompts):
+            run_idx += 1
+            print("=" * 60)
+            print(f"  [{run_idx}/{total_runs}] Model: {name} | Prompt [{prompt_idx + 1}/{total_prompts}]: {prompt}")
+            print("=" * 60)
 
-        if args.enable_paged_attn:
-            cmd.append("--enable-paged-attn")
+            cmd = [
+                sys.executable, args.script,
+                "--device", args.device,
+                "--model", model_path,
+                "--tp", str(args.tp),
+                "--batch-size", str(args.batch_size),
+                "--prompt", prompt,
+            ]
 
-        print(f"  Cmd: {' '.join(cmd)}")
-        print()
+            if args.enable_paged_attn:
+                cmd.append("--enable-paged-attn")
 
-        subprocess.run(cmd)
+            print(f"  Cmd: {' '.join(cmd)}")
+            print()
+
+            subprocess.run(cmd)
 
 
 if __name__ == "__main__":
