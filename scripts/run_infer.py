@@ -47,7 +47,7 @@ class PromptResult:
 
 @dataclass
 class ModelSanityResult:
-    """Stores the overall sanity check result for a model."""
+    """Stores the overall infer check result for a model."""
     model_name: str
     tp: int
     status: str = "PENDING"  # OK, FAIL
@@ -108,7 +108,7 @@ def start_server(model_path: str, tp: int, device: str, server_script: str,
         cmd.append("--enable-paged-attn")
 
     name = os.path.basename(model_path)
-    log_path = f"/tmp/infinilm_sanity_{name}.log"
+    log_path = f"/tmp/infinilm_infer_{name}.log"
     log_file = open(log_path, "w")
 
     print(f"  Server log: {log_path}")
@@ -304,7 +304,7 @@ def main():
         print(f"    - {p} (tp={tp})")
     print()
 
-    # Run sanity checks
+    # Run infer checks
     results: List[ModelSanityResult] = []
     total = len(model_configs)
 
@@ -317,7 +317,7 @@ def main():
         result = ModelSanityResult(model_name=name, tp=tp)
         server_proc = None
         log_file = None
-        log_path = f"/tmp/infinilm_sanity_{name}.log"
+        log_path = f"/tmp/infinilm_infer_{name}.log"
 
         try:
             # 1. Start server
