@@ -107,7 +107,22 @@ def _reader(stream):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="InfiniLM server-side runner")
+    ap = argparse.ArgumentParser(
+            description="InfiniLM server-side runner",
+            formatter_class=argparse.RawTextHelpFormatter
+    )
+    so_path = "/root/.infini/lib/libinfinirt.so"
+    build_time_str = "Unknown"
+    if os.path.exists(so_path):
+        mtime = os.path.getmtime(so_path)
+        build_time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime))
+
+    version_text = (
+        "异构智算推理系统\n"
+        "版本：V1.0\n"
+        f"构建时间：{build_time_str}"
+    )
+    ap.add_argument('--version', action='version', version=version_text)
     ap.add_argument("--model-dir", default="/data/rubik/models/")
     ap.add_argument("--models", nargs="*", default=None)
     ap.add_argument("--server-script",
