@@ -179,7 +179,11 @@ def main():
         if enable_pa:
             cmd.append("--enable-paged-attn")
 
-        print("异构智算推理系统-服务感知的推理系统")
+        print("异构智算推理系统")
+        print("版本：V1.0")
+        print("运行状态：就绪")
+        print()
+        print()
         print("大模型推理 国产GPU卡 & 模型适配种类测试")
         print()
         print("CMD:", " ".join(cmd))
@@ -198,6 +202,9 @@ def main():
 
         print("--- Waiting for server to start (timeout={}s) ---".format(
             args.startup_timeout))
+        print()
+        print("基于 " + "异构智算统一架构 V0.1" + "  推理引擎" + ", 开始加载...")
+        print()
         dl = time.time() + args.startup_timeout
         ready = False
         while time.time() < dl:

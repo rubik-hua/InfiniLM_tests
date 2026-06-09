@@ -245,7 +245,7 @@ def main():
         print(BOLD + "  [{}/{}]  {}  (tp={})".format(idx, total, name, tp) + RESET)
         print(BOLD + "=" * 70 + RESET)
         print()
-        print("异构智算推理系统-服务感知的推理系统")
+        print("异构智算推理系统")
         print("大模型推理 国产GPU卡 & 模型适配种类测试")
         print()
         print()
