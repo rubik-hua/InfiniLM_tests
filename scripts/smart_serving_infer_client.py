@@ -267,7 +267,11 @@ def main():
         result = ModelSanityResult(model_name=name, tp=tp)
         all_ok = True
         for prompt in args.prompts:
+            print("  Send request to infer server at http://{}:{}".format(host , port))
             print("  " + CYAN + ">> Request :" + RESET + " " + repr(prompt))
+            print()
+            print("  " + "waiting response...")
+            print()
             pr = send_prompt(host, port, name, prompt,
                              args.request_timeout, args.max_tokens)
             result.prompt_results.append(pr)
@@ -277,6 +281,7 @@ def main():
             else:
                 ms = "{:.0f}".format(pr.latency_ms)
                 short = _truncate(pr.response_text, args.display_len)
+                print("  Received response from infer server at http://{}:{}".format(host , port))
                 print("  " + GREEN + "<< Response:" + RESET +
                       " (" + ms + "ms) " + short)
             time.sleep(1)
