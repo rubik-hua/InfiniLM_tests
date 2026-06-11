@@ -1,0 +1,52 @@
+FROM corex:4.3.0 
+
+# 设置环境变量，避免 apt 安装过程中的交互式提示
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 安装 InfiniCore 项目所需的基础组件
+# build-essential: 包含了 gcc/g++ 等基本编译工具 (项目要求 gcc >= 11，此镜像默认满足)
+# wget: 下载 xmake 安装脚本和 PyTorch 所需
+# python3-pip: Python 包管理工具 (项目要求 Python >= 3.10，此镜像默认满足)
+# git: 克隆项目代码
+# 同时更新 apt 源并清理缓存以减小镜像体积
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        wget \
+        python3-pip \
+        git \
+        vim \
+        curl \
+        unzip \
+        libspdlog-dev \
+        libboost-all-dev \
+        ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 安装 xmake 构建工具 (项目核心依赖)
+RUN curl -fsSL https://xmake.io/shget.text | bash
+ENV PATH=/root/.local/bin:$PATH
+ENV XMAKE_YES=true
+
+
+# 设置工作目录，后续的 clone 和编译操作可以在这里进行
+#WORKDIR /workspace/InfiniLM
+
+# 复制预编译的 C++ 库（来自之前编译的 InfiniCore 产物）
+#COPY infinilm_artifacts/.infini /root/.infini/
+ENV LD_LIBRARY_PATH=/root/.infini/lib:/usr/local/corex/lib64:$LD_LIBRARY_PATH
+
+WORKDIR /workspace
+# 复制两个代码仓的源码
+#COPY InfiniCore /workspace/InfiniCore
+#COPY InfiniLM /workspace/InfiniLM
+
+# 设置 PYTHONPATH，同时指向两个项目的 python 目录（等同于可编辑安装）
+#ENV PYTHONPATH=/workspace/InfiniLM/python:/workspace/InfiniCore/python:$PYTHONPATH
+
+#安装推理时缺失的 Python 依赖
+RUN pip install --no-cache-dir janus
+
+CMD ["/bin/bash"]
+
